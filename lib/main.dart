@@ -1,5 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(MenuApp());
@@ -52,6 +57,16 @@ class _HomePageState extends State<HomePage> {
     await flutterTts.speak(text);
   }
 
+  void capturePhoto() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+
+    if (image != null) {
+      // Process the captured image if needed
+      // You can save it or perform any other required actions
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,41 +84,51 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) {
-              String textToSpeak = '';
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: capturePhoto,
+            child: Icon(Icons.camera_alt),
+          ),
+          SizedBox(height: 16),
+          FloatingActionButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  String textToSpeak = '';
 
-              return AlertDialog(
-                title: Text('Text-to-Speech'),
-                content: TextField(
-                  onChanged: (value) {
-                    textToSpeak = value;
-                  },
-                  decoration: InputDecoration(labelText: 'Text'),
-                ),
-                actions: [
-                  ElevatedButton(
-                    onPressed: () {
-                      speak(textToSpeak);
-                      Navigator.pop(context);
-                    },
-                    child: Text('Speak'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text('Cancel'),
-                  ),
-                ],
+                  return AlertDialog(
+                    title: Text('Text-to-Speech'),
+                    content: TextField(
+                      onChanged: (value) {
+                        textToSpeak = value;
+                      },
+                      decoration: InputDecoration(labelText: 'Text'),
+                    ),
+                    actions: [
+                      ElevatedButton(
+                        onPressed: () {
+                          speak(textToSpeak);
+                          Navigator.pop(context);
+                        },
+                        child: Text('Speak'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text('Cancel'),
+                      ),
+                    ],
+                  );
+                },
               );
             },
-          );
-        },
-        child: Icon(Icons.record_voice_over),
+            child: Icon(Icons.record_voice_over),
+          ),
+        ],
       ),
     );
   }
