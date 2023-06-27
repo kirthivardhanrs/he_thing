@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:sqflite/sqflite.dart';
-import 'dart:async';
 
 void main() {
   runApp(MenuApp());
@@ -27,69 +25,26 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   FlutterTts flutterTts = FlutterTts();
-  Database? _database;
   List<MenuItem> _menuItems = [];
 
   @override
   void initState() {
     super.initState();
-    openDatabaseAndLoadItems();
-  }
-
-  Future<void> openDatabaseAndLoadItems() async {
-    _database = await openDatabase(
-      'menu_database.db',
-      version: 1,
-      onCreate: (Database db, int version) {
-        db.execute(
-          'CREATE TABLE menu_items (id INTEGER PRIMARY KEY, name TEXT, price REAL)',
-        );
-      },
-    );
     loadMenuItems();
   }
 
-  Future<void> loadMenuItems() async {
-    final List<Map<String, dynamic>> maps =
-        await _database!.query('menu_items');
-    setState(() {
-      _menuItems = List.generate(maps.length, (i) {
-        return MenuItem(
-          id: maps[i]['id'],
-          name: maps[i]['name'],
-          price: maps[i]['price'],
-        );
+  void loadMenuItems() {
+    // Simulating loading menu items from a data source
+    Future.delayed(Duration(milliseconds: 500), () {
+      setState(() {
+        _menuItems = [
+          MenuItem(name: 'Item 1', price: 9.99),
+          MenuItem(name: 'Item 2', price: 12.99),
+          MenuItem(name: 'Item 3', price: 15.99),
+          MenuItem(name: 'Item 4', price: 8.99),
+        ];
       });
     });
-  }
-
-  Future<void> addMenuItem(String name, double price) async {
-    final menuItem = MenuItem(name: name, price: price);
-    await _database!.insert(
-      'menu_items',
-      menuItem.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-    loadMenuItems();
-  }
-
-  Future<void> updateMenuItem(MenuItem menuItem) async {
-    await _database!.update(
-      'menu_items',
-      menuItem.toMap(),
-      where: 'id = ?',
-      whereArgs: [menuItem.id],
-    );
-    loadMenuItems();
-  }
-
-  Future<void> deleteMenuItem(int id) async {
-    await _database!.delete(
-      'menu_items',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    loadMenuItems();
   }
 
   void speak(String text) async {
@@ -110,10 +65,6 @@ class _HomePageState extends State<HomePage> {
           return ListTile(
             title: Text(menuItem.name),
             subtitle: Text('\$${menuItem.price.toStringAsFixed(2)}'),
-            trailing: IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () => deleteMenuItem(menuItem.id!),
-            ),
             onTap: () => speak(menuItem.name),
           );
         },
@@ -123,36 +74,23 @@ class _HomePageState extends State<HomePage> {
           showDialog(
             context: context,
             builder: (context) {
-              String name = '';
-              double price = 0.0;
+              String textToSpeak = '';
 
               return AlertDialog(
-                title: Text('Add Menu Item'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      onChanged: (value) {
-                        name = value;
-                      },
-                      decoration: InputDecoration(labelText: 'Name'),
-                    ),
-                    TextField(
-                      onChanged: (value) {
-                        price = double.tryParse(value) ?? 0.0;
-                      },
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: 'Price'),
-                    ),
-                  ],
+                title: Text('Text-to-Speech'),
+                content: TextField(
+                  onChanged: (value) {
+                    textToSpeak = value;
+                  },
+                  decoration: InputDecoration(labelText: 'Text'),
                 ),
                 actions: [
                   ElevatedButton(
                     onPressed: () {
-                      addMenuItem(name, price);
+                      speak(textToSpeak);
                       Navigator.pop(context);
                     },
-                    child: Text('Save'),
+                    child: Text('Speak'),
                   ),
                   ElevatedButton(
                     onPressed: () {
@@ -165,20 +103,15 @@ class _HomePageState extends State<HomePage> {
             },
           );
         },
-        child: Icon(Icons.add),
+        child: Icon(Icons.record_voice_over),
       ),
     );
   }
 }
 
 class MenuItem {
-  final int? id;
   final String name;
   final double price;
 
-  MenuItem({this.id, required this.name, required this.price});
-
-  Map<String, dynamic> toMap() {
-    return {'id': id, 'name': name, 'price': price};
-  }
+  MenuItem({required this.name, required this.price});
 }
