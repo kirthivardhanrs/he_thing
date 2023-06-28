@@ -1,3 +1,35 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'ocr_service.dart';
+
+void main() {
+  runApp(MenuApp());
+}
+
+class MenuApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Menu App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
 class _HomePageState extends State<HomePage> {
   FlutterTts flutterTts = FlutterTts();
   List<MenuItem> _menuItems = [];
@@ -109,4 +141,11 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+class MenuItem {
+  final String name;
+  final double price;
+
+  MenuItem({required this.name, required this.price});
 }

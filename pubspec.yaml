@@ -31,8 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_tts: ^3.0.0
-  tflite_flutter: ^1.2.0
   image_picker: ^0.8.4+4
+  tflite: ^2.0.0
 
 
 
