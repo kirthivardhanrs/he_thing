@@ -1,41 +1,17 @@
-import 'dart:async';
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_tts/flutter_tts.dart';
-import 'package:image_picker/image_picker.dart';
-
-void main() {
-  runApp(MenuApp());
-}
-
-class MenuApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Menu App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatefulWidget {
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
 class _HomePageState extends State<HomePage> {
   FlutterTts flutterTts = FlutterTts();
   List<MenuItem> _menuItems = [];
+  OCRService _ocrService = OCRService();
 
   @override
   void initState() {
     super.initState();
     loadMenuItems();
+    initializeOCRModel();
+  }
+
+  void initializeOCRModel() async {
+    await _ocrService.loadModel();
   }
 
   void loadMenuItems() {
@@ -62,8 +38,9 @@ class _HomePageState extends State<HomePage> {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
-      // Process the captured image if needed
-      // You can save it or perform any other required actions
+      final recognizedText = await _ocrService.recognizeText(File(image.path));
+      print('Recognized Text: $recognizedText');
+      // Further process the recognized text as per your requirements
     }
   }
 
@@ -132,11 +109,4 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-}
-
-class MenuItem {
-  final String name;
-  final double price;
-
-  MenuItem({required this.name, required this.price});
 }
