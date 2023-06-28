@@ -1,17 +1,43 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
+
+void main() {
+  runApp(MenuApp());
+}
+
+class MenuApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Menu App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
 class _HomePageState extends State<HomePage> {
   FlutterTts flutterTts = FlutterTts();
   List<MenuItem> _menuItems = [];
-  OCRService _ocrService = OCRService();
+  String? recognizedText;
 
   @override
   void initState() {
     super.initState();
     loadMenuItems();
-    initializeOCRModel();
-  }
-
-  void initializeOCRModel() async {
-    await _ocrService.loadModel();
   }
 
   void loadMenuItems() {
@@ -38,10 +64,57 @@ class _HomePageState extends State<HomePage> {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
-      final recognizedText = await _ocrService.recognizeText(File(image.path));
+      recognizedText = await FlutterTesseractOcr.extractText(image.path);
       print('Recognized Text: $recognizedText');
-      // Further process the recognized text as per your requirements
+
+      // Process the recognized text and add it to the menu items
+      if (recognizedText != null && recognizedText!.isNotEmpty) {
+        final menuItemsList = recognizedText!.split('\n');
+        for (final menuItemText in menuItemsList) {
+          final menuItem = parseMenuItem(menuItemText);
+          if (menuItem != null) {
+            _menuItems.add(menuItem);
+          }
+        }
+      }
+
+      setState(() {});
     }
+  }
+
+  MenuItem? parseMenuItem(String menuItemText) {
+    // Parse the menuItemText and extract the name and price
+    // Implement your parsing logic here based on the structure of the recognized text
+
+    // Sample parsing logic (assuming the name and price are separated by a comma)
+    final parts = menuItemText.split(',');
+    if (parts.length == 2) {
+      final name = parts[0].trim();
+      final price = double.tryParse(parts[1].trim());
+      if (name.isNotEmpty && price != null) {
+        return MenuItem(name: name, price: price);
+      }
+    }
+
+    return null;
+  }
+
+  void readMenuItem(MenuItem menuItem) {
+    final String textToSpeak =
+        '${menuItem.name}, Price: \$${menuItem.price.toStringAsFixed(2)}';
+    speak(textToSpeak);
+  }
+
+  void readMenuItems() {
+    final StringBuffer buffer = StringBuffer();
+
+    for (final menuItem in _menuItems) {
+      buffer.writeln(
+          '${menuItem.name}, Price: \$${menuItem.price.toStringAsFixed(2)}');
+    }
+
+    final String textToSpeak = buffer.toString();
+    speak(textToSpeak);
   }
 
   @override
@@ -57,7 +130,7 @@ class _HomePageState extends State<HomePage> {
           return ListTile(
             title: Text(menuItem.name),
             subtitle: Text('\$${menuItem.price.toStringAsFixed(2)}'),
-            onTap: () => speak(menuItem.name),
+            onTap: () => readMenuItem(menuItem),
           );
         },
       ),
@@ -65,48 +138,23 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
-            onPressed: capturePhoto,
-            child: Icon(Icons.camera_alt),
+            onPressed: readMenuItems,
+            child: Icon(Icons.mic),
           ),
           SizedBox(height: 16),
           FloatingActionButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  String textToSpeak = '';
-
-                  return AlertDialog(
-                    title: Text('Text-to-Speech'),
-                    content: TextField(
-                      onChanged: (value) {
-                        textToSpeak = value;
-                      },
-                      decoration: InputDecoration(labelText: 'Text'),
-                    ),
-                    actions: [
-                      ElevatedButton(
-                        onPressed: () {
-                          speak(textToSpeak);
-                          Navigator.pop(context);
-                        },
-                        child: Text('Speak'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text('Cancel'),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            child: Icon(Icons.record_voice_over),
+            onPressed: capturePhoto,
+            child: Icon(Icons.camera_alt),
           ),
         ],
       ),
     );
   }
+}
+
+class MenuItem {
+  final String name;
+  final double price;
+
+  MenuItem({required this.name, required this.price});
 }
