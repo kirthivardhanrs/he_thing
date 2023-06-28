@@ -39,11 +39,6 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     loadMenuItems();
-    initializeOCRModel();
-  }
-
-  void initializeOCRModel() async {
-    await _ocrService.loadModel();
   }
 
   void loadMenuItems() {
